@@ -1,0 +1,33 @@
+{
+  "name": "urchin-session-replay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PostHog Session Replay clone built for Cloudflare Workers, D1 & R2 Stack",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "worker:dev": "wrangler dev src/worker/index.ts",
+    "worker:deploy": "wrangler deploy src/worker/index.ts",
+    "d1:init": "wrangler d1 execute urchin-db --local --file=schema.sql"
+  },
+  "dependencies": {
+    "hono": "^4.7.2",
+    "lucide-react": "^0.475.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "rrweb": "^2.0.0-alpha.14",
+    "rrweb-player": "^2.0.0-alpha.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250214.0",
+    "@types/node": "^22.13.4",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.1",
+    "wrangler": "^3.109.2"
+  }
+}
