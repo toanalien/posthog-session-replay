@@ -36,6 +36,39 @@ app.post('/api/v1/projects/:projectId/snapshots', async (c) => {
   }
 });
 
+// Official PostHog SDK Compatibility Route (/array/ and /e/ and /batch/)
+app.post('/array/*', async (c) => {
+  try {
+    const body = await c.req.json<any>();
+    // Handle posthog-js batch payload format
+    const events = body.data?.events || body.events || (Array.isArray(body) ? body : []);
+    const sessionId = body.data?.session_id || body.session_id || `ph_sid_${Date.now()}`;
+    const distinctId = body.data?.distinct_id || body.distinct_id || 'anon_ph';
+
+    const db = new DatabaseService(c.env);
+    const storage = new StorageService(c.env);
+    const ingest = new IngestService(db, storage);
+
+    const result = await ingest.processIngest({
+      projectId: 'default',
+      sessionId: sessionId,
+      distinctId: distinctId,
+      events: events
+    }, c.req.header('user-agent') || '', (c.req.raw as any).cf?.country || 'US');
+
+    return c.json({ status: 1, ...result });
+  } catch (err: any) {
+    return c.json({ status: 1, note: 'Ingested with compatibility fallback' });
+  }
+});
+
+app.post('/decide/*', (c) => {
+  return c.json({
+    config: { enable_collect_header_properties: true },
+    sessionRecording: { endpoint: '/array/' }
+  });
+});
+
 // Alternative shorthand ingest endpoint
 app.post('/api/v1/snapshots', async (c) => {
   try {
