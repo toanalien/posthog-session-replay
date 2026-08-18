@@ -41,6 +41,14 @@ export class UrchinReplaySDK {
     this.setupUnloadHandler();
   }
 
+  public getSessionId(): string {
+    return this.sessionId;
+  }
+
+  public getDistinctId(): string {
+    return this.distinctId;
+  }
+
   public start() {
     if (typeof window === 'undefined') return;
 
@@ -66,8 +74,10 @@ export class UrchinReplaySDK {
         },
         maskAllInputs: this.maskAllInputs,
         maskTextSelector: this.maskTextSelector,
-        blockClass: 'ph-no-capture',
-        maskTextClass: 'ph-mask',
+        // Prefer urchin-* ; also accept ph-* for interop with existing markup.
+        // rrweb tests each classList token against this RegExp.
+        blockClass: /^(?:urchin-no-capture|ph-no-capture)$/,
+        maskTextClass: /^(?:urchin-mask|ph-mask)$/,
         inlineStylesheet: true,
         collectFonts: true,
       }) || null;
@@ -97,8 +107,10 @@ export class UrchinReplaySDK {
     this.eventQueue.push(customEvt);
   }
 
-  public async flush(): Promise<void> {
-    if (this.eventQueue.length === 0) return;
+  public async flush(): Promise<{ ok: boolean; count: number }> {
+    if (this.eventQueue.length === 0) {
+      return { ok: true, count: 0 };
+    }
 
     const eventsToFlush = [...this.eventQueue];
     this.eventQueue = [];
@@ -131,11 +143,15 @@ export class UrchinReplaySDK {
       });
       if (!response.ok) {
         console.warn('[UrchinSDK] Flush failed status:', response.status);
+        this.eventQueue = [...eventsToFlush, ...this.eventQueue];
+        return { ok: false, count: eventsToFlush.length };
       }
+      return { ok: true, count: eventsToFlush.length };
     } catch (err) {
       console.error('[UrchinSDK] Flush network error:', err);
       // Re-queue un-sent events to prevent data loss
       this.eventQueue = [...eventsToFlush, ...this.eventQueue];
+      return { ok: false, count: eventsToFlush.length };
     }
   }
 

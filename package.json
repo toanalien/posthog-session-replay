@@ -2,7 +2,7 @@
   "name": "urchin-session-replay",
   "version": "1.0.0",
   "private": true,
-  "description": "PostHog Session Replay clone built for Cloudflare Workers, D1 & R2 Stack",
+  "description": "Independent session replay engine for Cloudflare Workers, D1 & R2 (rrweb + UrchinReplaySDK). Not affiliated with PostHog.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "worker:dev": "wrangler dev src/worker/index.ts",
     "worker:deploy": "wrangler deploy src/worker/index.ts",
-    "d1:init": "wrangler d1 execute urchin-db --local --file=schema.sql"
+    "d1:init": "wrangler d1 execute urchin-db --local --file=schema.sql",
+    "demo": "vite --open /demo.html"
   },
   "dependencies": {
     "hono": "^4.7.2",

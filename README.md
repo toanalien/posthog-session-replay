@@ -1,38 +1,42 @@
-# Urchin - PostHog Session Replay for Cloudflare Stack
+# Urchin — Session Replay for Cloudflare
 
-> A high-performance, cost-efficient **Session Replay & Debugger Engine** cloned from PostHog's architecture and optimized for **Cloudflare Stack** (Workers, D1 Database, R2 Object Storage, and Cloudflare Pages).
+> High-performance **session replay & debugger** for the **Cloudflare stack** (Workers, D1, R2, Pages): capture with `rrweb`, ingest at the edge, store metadata in D1, snapshots in R2, and replay in a Vite/React dashboard.
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com)
 [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+**Urchin is an independent open-source project.** It is **not affiliated with, endorsed by, or sponsored by PostHog Inc.** Architecture notes that mention PostHog (or similar tools) are for technical comparison only.
+
 ---
 
-## 🏛️ PostHog Architecture vs. Cloudflare Stack Mapping
+## Stack mapping
 
-| PostHog Component | Cloudflare Stack Equivalent | Function / Purpose |
+| Concern | Cloudflare building block | Role in Urchin |
 | :--- | :--- | :--- |
-| **Ingestion Pipeline** | **Cloudflare Workers** | Edge HTTP ingestion endpoint (`/api/v1/projects/:projectId/snapshots`). Zero cold starts, ultra low latency. |
-| **Event Metadata & Search** | **Cloudflare D1 (SQLite)** | Stores session metadata, distinct user IDs, entry/exit URLs, rage clicks count, duration, and error frequencies. |
-| **Raw Snapshot Storage** | **Cloudflare R2** | Stores compressed `rrweb` DOM mutation chunks. Zero egress fees for video playback. |
-| **Replay UI & Dashboard** | **Cloudflare Pages** | Modern React + Vite dashboard featuring `rrweb-player` and multi-tab debugging tools. |
+| **Ingestion** | **Workers** (Hono) | Edge HTTP ingest (`/api/v1/projects/:projectId/snapshots`) |
+| **Session metadata & search** | **D1** (SQLite) | Distinct IDs, URLs, duration, errors, rage clicks |
+| **Raw snapshots** | **R2** | `rrweb` DOM mutation chunks for playback |
+| **Dashboard** | **Pages / Vite static** | React UI + `rrweb-player` |
+
+Capture library: [`rrweb`](https://github.com/rrweb-io/rrweb) (MIT). Client SDK: custom **`UrchinReplaySDK`** in `src/sdk/` — not `posthog-js`.
 
 ---
 
-## ✨ Features
+## Features
 
-- 📹 **Full DOM Replay**: Pixel-perfect session replay powered by `rrweb`.
-- ⚡ **Cloudflare Native**: Designed to scale effortlessly on Cloudflare Free & Paid Tiers.
-- 🛑 **Automatic Rage Click Detection**: Identifies rapid user clicks (<800ms) and flags frustrated user moments.
-- 🐛 **Console & Exception Interceptor**: Automatically captures `console.error`, `console.warn`, and uncaught stack traces.
-- 🌐 **Network Waterfall Inspection**: Intercepts `fetch` & `XMLHttpRequest` to show HTTP status codes and response timings.
-- 🔒 **Privacy & Masking Controls**: Password inputs and element classes (`ph-mask`, `ph-no-capture`) redacted at recording time.
-- 📊 **Multi-Faceted Search & Filters**: Search by distinct user, entry page, minimum duration, errors, or rage clicks.
+- Full DOM replay powered by `rrweb`
+- Cloudflare-native Workers + D1 + R2 path
+- Rage-click detection (<800ms burst clicks)
+- Console + network interceptors on the client SDK
+- Privacy masking: `maskAllInputs`, plus `urchin-mask` / `urchin-no-capture` (also accepts `ph-mask` / `ph-no-capture` for interop)
+- Session search & filters in the dashboard
+- Standalone demo store at `/demo.html` for end-to-end checks
 
 ---
 
-## 🛠️ Quick Start & Local Development
+## Quick start
 
-### 1. Clone & Install Dependencies
+### 1. Install
 
 ```bash
 git clone https://github.com/toanalien/posthog-session-replay.git
@@ -40,50 +44,43 @@ cd posthog-session-replay
 npm install
 ```
 
-### 2. Run Local Development Server
+### 2. Local development
 
 ```bash
-# Start Vite Frontend Dashboard (http://localhost:3000)
+# Terminal 1 — Worker + local D1/R2 (http://localhost:8787)
+npm run d1:init   # first time / after schema changes
+npm run worker:dev
+
+# Terminal 2 — Dashboard + demo (http://localhost:3000)
 npm run dev
 
-# In another terminal, start local Cloudflare Worker & D1 (http://localhost:8787)
-npm run worker:dev
+# Optional: open the demo store with Urchin SDK attached
+npm run demo      # http://localhost:3000/demo.html
 ```
+
+**Verify recording quickly**
+
+1. Keep `npm run worker:dev` on `:8787`.
+2. Open [http://localhost:3000/demo.html](http://localhost:3000/demo.html).
+3. Interact (products / Pay / error) — wait for flush or press **Flush now**.
+4. Confirm the session in the side panel, then open the [Dashboard](http://localhost:3000/) to replay.
 
 ---
 
-## 🚀 Deploying to Cloudflare
-
-### 1. Create D1 Database & R2 Bucket
+## Deploy to Cloudflare
 
 ```bash
-# Create D1 Database
 npx wrangler d1 create urchin-db
-
-# Create R2 Storage Bucket
 npx wrangler r2 bucket create urchin-snapshots
-```
-
-### 2. Initialize Database Schema
-
-```bash
-# Run schema migration on Cloudflare D1 Remote
+# Update wrangler.toml with the real D1 database_id, then:
 npx wrangler d1 execute urchin-db --remote --file=schema.sql
-```
-
-### 3. Deploy Worker & Static Frontend
-
-```bash
-# Build React app and deploy Cloudflare Worker + Pages
 npm run build
 npm run worker:deploy
 ```
 
 ---
 
-## 📦 Client Recording SDK Setup
-
-Add the lightweight SDK to your web app:
+## Client SDK
 
 ```typescript
 import { UrchinReplaySDK } from './src/sdk';
@@ -95,12 +92,21 @@ const sdk = new UrchinReplaySDK({
   debug: false
 });
 
-// Start recording session
 sdk.start();
 ```
 
+Mask sensitive nodes with `class="urchin-mask"` or skip capture with `class="urchin-no-capture"`. Legacy interop class names `ph-mask` / `ph-no-capture` are also recognized.
+
+Optional Worker routes `/array/*` and `/decide/*` are **experimental compatibility stubs** — not a certified drop-in for official PostHog SDKs.
+
 ---
 
-## 📄 License
+## License & third-party notices
 
-MIT License © 2026 Toan Vo.
+- **Urchin**: [MIT](LICENSE) © 2026 Toan Vo
+- **rrweb / rrweb-player**: MIT (see their upstream licenses)
+- No PostHog source code is vendored in this repository. Any similarity is architectural (session replay pipelines are a well-known pattern).
+
+### Trademark
+
+“PostHog” and related marks are trademarks of their respective owners. Use of those names here is for descriptive / comparative reference only.

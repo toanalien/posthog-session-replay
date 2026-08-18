@@ -14,7 +14,7 @@ app.use('*', cors({
   allowMethods: ['GET', 'POST', 'OPTIONS'],
 }));
 
-// Ingest endpoint (matches PostHog snapshot ingestion behavior)
+// Ingest endpoint for UrchinReplaySDK snapshot chunks
 app.post('/api/v1/projects/:projectId/snapshots', async (c) => {
   try {
     const projectId = c.req.param('projectId');
@@ -36,14 +36,14 @@ app.post('/api/v1/projects/:projectId/snapshots', async (c) => {
   }
 });
 
-// Official PostHog SDK Compatibility Route (/array/ and /e/ and /batch/)
+// Experimental compatibility stubs for common analytics ingest paths (not a certified drop-in)
 app.post('/array/*', async (c) => {
   try {
     const body = await c.req.json<any>();
-    // Handle posthog-js batch payload format
+    // Best-effort parse of batch-style payloads
     const events = body.data?.events || body.events || (Array.isArray(body) ? body : []);
-    const sessionId = body.data?.session_id || body.session_id || `ph_sid_${Date.now()}`;
-    const distinctId = body.data?.distinct_id || body.distinct_id || 'anon_ph';
+    const sessionId = body.data?.session_id || body.session_id || `sid_compat_${Date.now()}`;
+    const distinctId = body.data?.distinct_id || body.distinct_id || 'anon_compat';
 
     const db = new DatabaseService(c.env);
     const storage = new StorageService(c.env);

@@ -28,7 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo, onRefresh, sessionCo
                 CF Workers Stack
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-medium">PostHog Session Replay Engine</p>
+            <p className="text-xs text-slate-400 font-medium">Session Replay for Cloudflare</p>
           </div>
         </div>
 
@@ -43,6 +43,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo, onRefresh, sessionCo
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Sync</span>
           </button>
+
+          <a
+            href="/demo.html"
+            className="flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 rounded-lg transition"
+            title="Open standalone store demo with Urchin SDK"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>Demo Store</span>
+          </a>
 
           <button
             onClick={onOpenDemo}

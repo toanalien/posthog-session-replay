@@ -141,7 +141,7 @@ export const DemoPlaygroundModal: React.FC<DemoPlaygroundModalProps> = ({
                   value={passwordText}
                   onChange={(e) => setPasswordText(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-purple-500 ph-mask"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-purple-500 urchin-mask"
                 />
               </div>
             </div>

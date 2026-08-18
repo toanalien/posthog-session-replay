@@ -60,4 +60,4 @@ CREATE INDEX IF NOT EXISTS idx_events_session ON session_events(session_id, time
 CREATE INDEX IF NOT EXISTS idx_chunks_session ON session_chunks(session_id, chunk_index ASC);
 
 -- Insert default project if not exists
-INSERT OR IGNORE INTO projects (id, name, api_key) VALUES ('default', 'Default Project', 'ph_live_urchin_demo_key');
+INSERT OR IGNORE INTO projects (id, name, api_key) VALUES ('default', 'Default Project', 'urchin_demo_local_key');
